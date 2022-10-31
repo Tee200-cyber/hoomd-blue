@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2022 The Regents of the University of Michigan.
+ // Copyright (c) 2009-2022 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #ifndef _SHAPE_MOVES_H
@@ -12,6 +12,8 @@
 #include <hoomd/Variant.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
+#include <cmath>
 
 namespace hoomd
     {
@@ -31,10 +33,9 @@ template<typename Shape> class ShapeMoveBase
         m_step_size.resize(m_ntypes, 0);
         }
 
-    virtual ~ShapeMoveBase() {};
-
+    virtual ~ShapeMoveBase() {}; 
     //! prepare is called at the beginning of every update()
-    virtual void prepare(uint64_t timestep) { }
+    virtual void prepare(uint64_t timestep) { } 
 
     //! construct is called for each particle type that will be changed in update()
     virtual void update_shape(uint64_t,
@@ -47,10 +48,10 @@ template<typename Shape> class ShapeMoveBase
     //! retreat whenever the proposed move is rejected.
     virtual void retreat(uint64_t timestep, unsigned int type) { }
 
-    Scalar getStepSize(std::string typ)
+    Scalar getStepSize(std::string typ) 
         {
         unsigned int typid = getValidateType(typ);
-        return this->m_step_size[typid];
+        return this->m_step_size[typid]; 
         }
 
     void setStepSize(std::string typ, Scalar volume)
@@ -85,13 +86,14 @@ template<typename Shape> class ShapeMoveBase
         {
         return this->m_move_probability;
         }
+    void initializeDeterminatsInertiaTensor();
 
     void setMoveProbability(Scalar move_probability)
         {
         this->m_move_probability = fmin(move_probability, 1.0);
         }
 
-    virtual Scalar computeLogBoltmann(uint64_t timestep,
+ virtual Scalar computeLogBoltmann(uint64_t timestep,
                                       const unsigned int& N,
                                       const unsigned int type_id,
                                       const typename Shape::param_type& shape_new,
@@ -162,6 +164,7 @@ template<typename Shape> class PythonShapeMove : public ShapeMoveBase<Shape>
         {
         // move has been rejected.
         m_params[type] = m_params_backup[type];
+
         }
 
     pybind11::list getParams(std::string typ)
@@ -200,9 +203,9 @@ template<typename Shape> class PythonShapeMove : public ShapeMoveBase<Shape>
 
     private:
     std::vector<std::vector<Scalar>>
-        m_params_backup;                       // tunable shape parameters to perform trial moves on
-    std::vector<std::vector<Scalar>> m_params; // tunable shape parameters to perform trial moves on
-    // callback that takes m_params as an argiment and returns a Python dictionary with the shape
+        m_params_backup;                       
+    std::vector<std::vector<Scalar>> m_params; 
+    
     // params.
     pybind11::object m_python_callback;
     };
@@ -210,18 +213,21 @@ template<typename Shape> class PythonShapeMove : public ShapeMoveBase<Shape>
 class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedron>
     {
     public:
-    typedef typename ShapeConvexPolyhedron::param_type param_type;
-
+    typedef typename ShapeConvexPolyhedron::param_type param_type; 
     ConvexPolyhedronVertexShapeMove(std::shared_ptr<SystemDefinition> sysdef,
                                     std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>> mc)
         : ShapeMoveBase<ShapeConvexPolyhedron>(sysdef, mc)
         {
+        std::cout << "Constructor V ";//Recently added
+        std::cerr<<"construcor V Error!"; //Recently Added	
         this->m_centroids.resize(this->m_ntypes, vec3<Scalar>(0, 0, 0));
         initializeMassProperties();
         }
 
     void initializeMassProperties()
         {
+	std::cout << "C++V mass prop";//Recently added
+        std::cerr<<"c ++V mass prop Error!"; //Recently Added	
         auto& mc_params = this->m_mc->getParams();
         for (unsigned int i = 0; i < this->m_ntypes; i++)
             {
@@ -232,6 +238,8 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
 
     void setVolume(std::string typ, Scalar volume)
         {
+	std::cout << "C++V param type";//Recently added
+        std::cerr<<"c ++V param type Error!"; //Recently Added	
         unsigned int typid = getValidateType(typ);
         this->m_volume[typid] = volume;
         auto& mc_params = this->m_mc->getParams();
@@ -259,10 +267,124 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             rsq = fmax(rsq, dot(vert, vert));
             }
         shape.diameter = OverlapReal(2.0 * fast::sqrt(rsq));
+	        std::cout << "C++V scale particle vol";//Recently added
+        std::cerr<<"c ++V scale particle vol Error!"; //Recently Added
         }
 
     void prepare(uint64_t timestep)
         {
+        std::cout << "voidV prepare ";//Recently added
+        std::cerr<<"PrepareV Error!"; //Recently Added	
+        m_step_size_backup = this->m_step_size;
+        }
+
+    void update_shape(uint64_t timestep,
+                      const unsigned int& type_id,
+                      param_type& shape,
+                      hoomd::RandomGenerator& rng)
+        {
+        // perturb the shape.
+        for (unsigned int i = 0; i < shape.N; i++)
+            {
+            if (hoomd::detail::generate_canonical<double>(rng) < this->m_move_probability)
+                {
+		std::cout << "C++V perturb shape";//Recently added
+        	std::cerr<<"c ++V perturb shape Error!"; //Recently Added	
+                vec3<Scalar> vert(shape.x[i], shape.y[i], shape.z[i]);
+                move_translate(vert, rng, this->m_step_size[type_id], 3);
+                shape.x[i] = static_cast<OverlapReal>(vert.x);
+                shape.y[i] = static_cast<OverlapReal>(vert.y);
+                shape.z[i] = static_cast<OverlapReal>(vert.z);
+                }
+            }
+        detail::MassProperties<ShapeConvexPolyhedron> mp(shape);
+        Scalar volume = mp.getVolume();
+        vec3<Scalar> dr = this->m_centroids[type_id] - mp.getCenterOfMass();
+        OverlapReal scale
+            = static_cast<OverlapReal>(fast::pow(this->m_volume[type_id] / volume, 1.0 / 3.0));
+        scaleParticleVolume(shape, dr, scale);
+        this->m_step_size[type_id] *= scale;
+	 std::cout << "V update shape ";//Recently added
+         std::cerr<<"V Update shape Error!"; //Recently Added
+        }
+
+    void retreat(uint64_t timestep, unsigned int type)
+        {
+        std::cout << "V retreat ";//Recently added
+        std::cerr<<"V Retreat Error!"; //Recently Added	
+        this->m_step_size[type] = m_step_size_backup[type];
+        }
+
+    private:
+    std::vector<Scalar> m_step_size_backup;
+    }; // end class ConvexPolyhedronVertexShapeMove
+
+class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedron>
+    {
+    public:
+    typedef typename ShapeConvexPolyhedron::param_type param_type;
+
+    ConvexPolyhedronBiasedShapeMove(std::shared_ptr<SystemDefinition> sysdef,
+                                    std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>> mc)
+        : ShapeMoveBase<ShapeConvexPolyhedron>(sysdef, mc)
+        {
+	std::cout<<"B Constructor";//Recently Added
+	std::cerr<<"B Constructor Error!"; //Recently Added	
+        this->m_centroids.resize(this->m_ntypes, vec3<Scalar>(0, 0, 0));
+        initializeMassProperties();
+        }
+
+    void initializeMassProperties()
+        {
+        auto& mc_params = this->m_mc->getParams();
+        for (unsigned int i = 0; i < this->m_ntypes; i++)
+            {
+	    std::cout<<"B Initialize Mass Properties";//Recently Added  
+	    std::cerr<<"B Mass Property Error!"; //Recently Added   
+            detail::MassProperties<ShapeConvexPolyhedron> mp(mc_params[i]);
+            this->m_centroids[i] = mp.getCenterOfMass();
+            }
+        }
+
+    void setVolume(std::string typ, Scalar volume)
+        {
+	std::cout <<"B Set Volume";//Recently Added
+        std::cerr<<"BVolume Error!"; //Recently Added 	
+        unsigned int typid = getValidateType(typ);
+        this->m_volume[typid] = volume;
+        auto& mc_params = this->m_mc->getParams();
+        param_type shape = mc_params[typid];
+        detail::MassProperties<ShapeConvexPolyhedron> mp(shape);
+        Scalar current_volume = mp.getVolume();
+        vec3<Scalar> dr = this->m_centroids[typid] - mp.getCenterOfMass();
+        OverlapReal scale = (OverlapReal)fast::pow(volume / current_volume, 1.0 / 3.0);
+        this->scaleParticleVolume(shape, dr, scale);
+        this->m_mc->setParam(typid, shape);
+        }
+
+    void scaleParticleVolume(param_type& shape, vec3<Scalar> dr, OverlapReal scale)
+        {
+        Scalar rsq = 0.0;
+        for (unsigned int i = 0; i < shape.N; i++)
+            {
+            shape.x[i] += static_cast<OverlapReal>(dr.x);
+            shape.x[i] *= scale;
+            shape.y[i] += static_cast<OverlapReal>(dr.y);
+            shape.y[i] *= scale;
+            shape.z[i] += static_cast<OverlapReal>(dr.z);
+            shape.z[i] *= scale;
+            vec3<Scalar> vert(shape.x[i], shape.y[i], shape.z[i]);
+            rsq = fmax(rsq, dot(vert, vert));
+            }
+        shape.diameter = OverlapReal(2.0 * fast::sqrt(rsq));
+	std::cout<<"B Scale Particle Volume";//Recently Added
+        std::cerr<<"BScale Particle Volume Error!"; //Recently Added 
+        }
+
+    void prepare(uint64_t timestep)
+        {
+	std::cout<<"B void prerpare";//Recently Added
+        std::cerr<<"B Prepare Error!"; //Recently Added 	
         m_step_size_backup = this->m_step_size;
         }
 
@@ -290,16 +412,76 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             = static_cast<OverlapReal>(fast::pow(this->m_volume[type_id] / volume, 1.0 / 3.0));
         scaleParticleVolume(shape, dr, scale);
         this->m_step_size[type_id] *= scale;
+	std::cout<<"Void update shape";//Recently Added
+	std::cerr<<"Error!"; //Recently Added
         }
 
     void retreat(uint64_t timestep, unsigned int type)
         {
+	std::cout << "Retreat";	//Recently Added
+	std::cerr<<"B Retreat Error!"; //Recently Added
         this->m_step_size[type] = m_step_size_backup[type];
         }
 
+    Scalar computeLogBoltmann(uint64_t timestep,
+                              const unsigned int& N,
+                              const unsigned int type_id,
+                              const typename ShapeConvexPolyhedron::param_type& shape_new,
+                              const Scalar& inew,
+                              const typename ShapeConvexPolyhedron::param_type& shape_old,
+                              const Scalar& iold)
+        {
+          Scalar inertia_term = ShapeMoveBase<ShapeConvexPolyhedron>::computeLogBoltmann(timestep, N, type_id, shape_new, inew, shape_old, iold);
+
+
+          //inertia tensor calculation 
+          
+          detail::MassProperties<ShapeConvexPolyhedron> mp_n(shape_new);
+          detail::MassProperties<ShapeConvexPolyhedron> mp_o(shape_old);
+          
+          std::vector<Scalar>& inertia_n(mp_n.getInertiaTensor());
+          std::vector<Scalar>& inertia_o(mp_o.getInertiaTensor());
+
+          Scalar tr_I_n = inertia_n[0]+inertia_n[1]+inertia_n[2];
+          Scalar tr_I_o = inertia_o[0]+inertia_o[1]+inertia_o[2];
+
+          Scalar beta = 1; 
+
+         Scalar H_old = 0.5*m_k*pow(tr_I_o - m_inertia_tensor_t, 2);
+         Scalar H_new = 0.5*m_k*pow(tr_I_n - m_inertia_tensor_t, 2);
+
+          std::cout << "Compute LogBoltzmann ";//Recently added
+	  std::cerr<<"Compute Boltzmann Error!"; //Recently Added 
+          return beta*(H_old-H_new) + inertia_term;
+
+        }
+
+    void setK(Scalar temp)// temp=temporary
+    {    
+      m_k=temp; //temp=temporary
+      
+    }
+
+    Scalar getK()// temp=temporary
+    { 
+      return m_k;
+    }
+
+    void setInertiaTarget(Scalar temp)//temp=temporary
+    {
+      m_inertia_tensor_t=temp; //temp=temporary
+    }
+
+    Scalar getInertiaTarget(Scalar temp)//temp=temporary
+    {
+      return m_inertia_tensor_t;
+    }
+
     private:
     std::vector<Scalar> m_step_size_backup;
-    }; // end class ConvexPolyhedronVertexShapeMove
+    Scalar m_inertia_tensor_t; 
+    Scalar m_k;                            
+    }; // end class ConvexPolyhedronBiasedShapeMove
 
 template<class Shape> class ElasticShapeMoveBase : public ShapeMoveBase<Shape>
     {
@@ -331,8 +513,7 @@ template<class Shape> class ElasticShapeMoveBase : public ShapeMoveBase<Shape>
     virtual void setReferenceShape(std::string typ, pybind11::dict v) = 0;
 
     protected:
-    std::shared_ptr<Variant> m_k; // shape move stiffness
-    // shape to reference shape move against
+    std::shared_ptr<Variant> m_k; 
     std::vector<param_type, hoomd::detail::managed_allocator<param_type>> m_reference_shapes;
     };
 
@@ -467,13 +648,7 @@ class ElasticShapeMove<ShapeConvexPolyhedron> : public ElasticShapeMoveBase<Shap
                               const typename ShapeConvexPolyhedron::param_type& shape_old,
                               const Scalar& iold)
         {
-        Scalar inertia_term = ShapeMoveBase<ShapeConvexPolyhedron>::computeLogBoltmann(timestep,
-                                                                                       N,
-                                                                                       type_id,
-                                                                                       shape_new,
-                                                                                       inew,
-                                                                                       shape_old,
-                                                                                       iold);
+        Scalar inertia_term = ShapeMoveBase<ShapeConvexPolyhedron>::computeLogBoltmann(timestep, N, type_id, shape_new, inew, shape_old, iold);
         Scalar stiff = (*m_k)(timestep);
         Matrix3S eps = this->getEps(type_id);
         Matrix3S eps_last = this->getEpsLast(type_id);
@@ -675,6 +850,26 @@ inline void export_ConvexPolyhedronVertexShapeMove(pybind11::module& m, const st
         .def("setVolume", &ConvexPolyhedronVertexShapeMove::setVolume);
     }
 
+inline void export_ConvexPolyhedronBiasedShapeMove(pybind11::module& m, const std::string& name)
+    {
+    pybind11::class_<ConvexPolyhedronBiasedShapeMove,
+                     ShapeMoveBase<ShapeConvexPolyhedron>,
+                     std::shared_ptr<ConvexPolyhedronBiasedShapeMove>>(m, name.c_str())
+        .def(pybind11::init<std::shared_ptr<SystemDefinition>,
+                            std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>>>())
+        .def_property("InertiaTarget",
+                      &ConvexPolyhedronBiasedShapeMove::getInertiaTarget,
+                      &ConvexPolyhedronBiasedShapeMove::setInertiaTarget)
+        .def_property("k",
+                      &ConvexPolyhedronBiasedShapeMove::getK,
+                      &ConvexPolyhedronBiasedShapeMove::setK)
+        .def_property("vertex_move_probability",
+                      &ConvexPolyhedronBiasedShapeMove::getMoveProbability,
+                      &ConvexPolyhedronBiasedShapeMove::setMoveProbability)
+        .def("getVolume", &ConvexPolyhedronBiasedShapeMove::getVolume)
+        .def("setVolume", &ConvexPolyhedronBiasedShapeMove::setVolume);
+    }
+
 template<class Shape>
 inline void export_ElasticShapeMove(pybind11::module& m, const std::string& name)
     {
@@ -698,3 +893,4 @@ inline void export_ElasticShapeMove(pybind11::module& m, const std::string& name
     } // namespace hoomd
 
 #endif
+
