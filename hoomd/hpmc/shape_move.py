@@ -56,8 +56,7 @@ class ShapeMove(_HOOMDBaseObject):
             raise RuntimeError("Integrator is not attached yet.")
 
         integrator_name = integrator.__class__.__name__
-        print("trying to attach "+integrator_name)
-        print("suported_shapes ", self._suported_shapes)
+         
         if integrator_name in self._suported_shapes:
             self._move_cls = getattr(_hpmc,
                                      self.__class__.__name__ + integrator_name)
@@ -279,14 +278,14 @@ class Vertex(ShapeMove):
         param_dict = ParameterDict(
             vertex_move_probability=float(vertex_move_probability))
         self._param_dict.update(param_dict)
-        print("param dict")
+         
 
         typeparam_volume = TypeParameter('volume',
                                          type_kind='particle_types',
                                          param_dict=TypeParameterDict(
                                              float, len_keys=1))
         self._add_typeparam(typeparam_volume)
-        print(" type param")
+        
 
 
 
@@ -344,13 +343,13 @@ class Biased(ShapeMove):
         param_dict["InertiaTarget"] = InertiaTarget
         param_dict["k"] = k
         self._param_dict.update(param_dict)
-        print("biased param dict",param_dict)
+        
         typeparam_volume = TypeParameter('volume',
                                          type_kind='particle_types',
                                          param_dict=TypeParameterDict(
                                              float, len_keys=1))
         self._add_typeparam(typeparam_volume)
-        print("biased type param")
+        
 
 
        
