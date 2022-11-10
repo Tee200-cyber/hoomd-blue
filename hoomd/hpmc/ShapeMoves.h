@@ -218,16 +218,14 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
                                     std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>> mc)
         : ShapeMoveBase<ShapeConvexPolyhedron>(sysdef, mc)
         {
-        std::cout << "Constructor V ";//Recently added
-        std::cerr<<"construcor V Error!"; //Recently Added	
+         	
         this->m_centroids.resize(this->m_ntypes, vec3<Scalar>(0, 0, 0));
         initializeMassProperties();
         }
 
     void initializeMassProperties()
         {
-	std::cout << "C++V mass prop";//Recently added
-        std::cerr<<"c ++V mass prop Error!"; //Recently Added	
+	 
         auto& mc_params = this->m_mc->getParams();
         for (unsigned int i = 0; i < this->m_ntypes; i++)
             {
@@ -238,8 +236,7 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
 
     void setVolume(std::string typ, Scalar volume)
         {
-	std::cout << "C++V param type";//Recently added
-        std::cerr<<"c ++V param type Error!"; //Recently Added	
+	 
         unsigned int typid = getValidateType(typ);
         this->m_volume[typid] = volume;
         auto& mc_params = this->m_mc->getParams();
@@ -267,14 +264,12 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             rsq = fmax(rsq, dot(vert, vert));
             }
         shape.diameter = OverlapReal(2.0 * fast::sqrt(rsq));
-	        std::cout << "C++V scale particle vol";//Recently added
-        std::cerr<<"c ++V scale particle vol Error!"; //Recently Added
+	        
         }
 
     void prepare(uint64_t timestep)
         {
-        std::cout << "voidV prepare ";//Recently added
-        std::cerr<<"PrepareV Error!"; //Recently Added	
+        
         m_step_size_backup = this->m_step_size;
         }
 
@@ -288,8 +283,7 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             {
             if (hoomd::detail::generate_canonical<double>(rng) < this->m_move_probability)
                 {
-		std::cout << "C++V perturb shape";//Recently added
-        	std::cerr<<"c ++V perturb shape Error!"; //Recently Added	
+		 
                 vec3<Scalar> vert(shape.x[i], shape.y[i], shape.z[i]);
                 move_translate(vert, rng, this->m_step_size[type_id], 3);
                 shape.x[i] = static_cast<OverlapReal>(vert.x);
@@ -304,14 +298,12 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             = static_cast<OverlapReal>(fast::pow(this->m_volume[type_id] / volume, 1.0 / 3.0));
         scaleParticleVolume(shape, dr, scale);
         this->m_step_size[type_id] *= scale;
-	 std::cout << "V update shape ";//Recently added
-         std::cerr<<"V Update shape Error!"; //Recently Added
+	  
         }
 
     void retreat(uint64_t timestep, unsigned int type)
         {
-        std::cout << "V retreat ";//Recently added
-        std::cerr<<"V Retreat Error!"; //Recently Added	
+        
         this->m_step_size[type] = m_step_size_backup[type];
         }
 
@@ -328,8 +320,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
                                     std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>> mc)
         : ShapeMoveBase<ShapeConvexPolyhedron>(sysdef, mc)
         {
-	std::cout<<"B Constructor";//Recently Added
-	std::cerr<<"B Constructor Error!"; //Recently Added	
+	 
         this->m_centroids.resize(this->m_ntypes, vec3<Scalar>(0, 0, 0));
         initializeMassProperties();
         }
@@ -339,8 +330,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
         auto& mc_params = this->m_mc->getParams();
         for (unsigned int i = 0; i < this->m_ntypes; i++)
             {
-	    std::cout<<"B Initialize Mass Properties";//Recently Added  
-	    std::cerr<<"B Mass Property Error!"; //Recently Added   
+	      
             detail::MassProperties<ShapeConvexPolyhedron> mp(mc_params[i]);
             this->m_centroids[i] = mp.getCenterOfMass();
             }
@@ -348,8 +338,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
 
     void setVolume(std::string typ, Scalar volume)
         {
-	std::cout <<"B Set Volume";//Recently Added
-        std::cerr<<"BVolume Error!"; //Recently Added 	
+	  	
         unsigned int typid = getValidateType(typ);
         this->m_volume[typid] = volume;
         auto& mc_params = this->m_mc->getParams();
@@ -377,14 +366,12 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             rsq = fmax(rsq, dot(vert, vert));
             }
         shape.diameter = OverlapReal(2.0 * fast::sqrt(rsq));
-	std::cout<<"B Scale Particle Volume";//Recently Added
-        std::cerr<<"BScale Particle Volume Error!"; //Recently Added 
+	 
         }
 
     void prepare(uint64_t timestep)
         {
-	std::cout<<"B void prerpare";//Recently Added
-        std::cerr<<"B Prepare Error!"; //Recently Added 	
+	 	
         m_step_size_backup = this->m_step_size;
         }
 
@@ -412,14 +399,12 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             = static_cast<OverlapReal>(fast::pow(this->m_volume[type_id] / volume, 1.0 / 3.0));
         scaleParticleVolume(shape, dr, scale);
         this->m_step_size[type_id] *= scale;
-	std::cout<<"Void update shape";//Recently Added
-	std::cerr<<"Error!"; //Recently Added
+	 
         }
 
     void retreat(uint64_t timestep, unsigned int type)
         {
-	std::cout << "Retreat";	//Recently Added
-	std::cerr<<"B Retreat Error!"; //Recently Added
+	 
         this->m_step_size[type] = m_step_size_backup[type];
         }
 
@@ -450,8 +435,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
          Scalar H_old = 0.5*m_k*pow(tr_I_o - m_inertia_tensor_t, 2);
          Scalar H_new = 0.5*m_k*pow(tr_I_n - m_inertia_tensor_t, 2);
 
-          std::cout << "Compute LogBoltzmann ";//Recently added
-	  std::cerr<<"Compute Boltzmann Error!"; //Recently Added 
+           
           return beta*(H_old-H_new) + inertia_term;
 
         }
