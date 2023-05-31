@@ -1,4 +1,4 @@
- # Copyright (c) 2009-2022 The Regents of the University of Michigan.
+# Copyright (c) 2009-2022 The Regents of the University of Michigan.
 # Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 """Shape moves for a for alchemical simulations in extended ensembles.
@@ -56,7 +56,6 @@ class ShapeMove(_HOOMDBaseObject):
             raise RuntimeError("Integrator is not attached yet.")
 
         integrator_name = integrator.__class__.__name__
-         
         if integrator_name in self._suported_shapes:
             self._move_cls = getattr(_hpmc,
                                      self.__class__.__name__ + integrator_name)
@@ -278,7 +277,7 @@ class Vertex(ShapeMove):
         param_dict = ParameterDict(
             vertex_move_probability=float(vertex_move_probability))
         self._param_dict.update(param_dict)
-         
+        
 
         typeparam_volume = TypeParameter('volume',
                                          type_kind='particle_types',
@@ -343,7 +342,6 @@ class Biased(ShapeMove):
         param_dict["InertiaTarget"] = InertiaTarget
         param_dict["k"] = k
         self._param_dict.update(param_dict)
-        
         typeparam_volume = TypeParameter('volume',
                                          type_kind='particle_types',
                                          param_dict=TypeParameterDict(
@@ -352,4 +350,3 @@ class Biased(ShapeMove):
         
 
 
-       
