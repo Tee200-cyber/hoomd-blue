@@ -1,4 +1,4 @@
- // Copyright (c) 2009-2022 The Regents of the University of Michigan.
+// Copyright (c) 2009-2022 The Regents of the University of Michigan.
 // Part of HOOMD-blue, released under the BSD 3-Clause License.
 
 #ifndef _SHAPE_MOVES_H
@@ -218,14 +218,14 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
                                     std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>> mc)
         : ShapeMoveBase<ShapeConvexPolyhedron>(sysdef, mc)
         {
-         	
+        	
         this->m_centroids.resize(this->m_ntypes, vec3<Scalar>(0, 0, 0));
         initializeMassProperties();
         }
 
     void initializeMassProperties()
         {
-	 
+		
         auto& mc_params = this->m_mc->getParams();
         for (unsigned int i = 0; i < this->m_ntypes; i++)
             {
@@ -236,7 +236,7 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
 
     void setVolume(std::string typ, Scalar volume)
         {
-	 
+		
         unsigned int typid = getValidateType(typ);
         this->m_volume[typid] = volume;
         auto& mc_params = this->m_mc->getParams();
@@ -269,7 +269,7 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
 
     void prepare(uint64_t timestep)
         {
-        
+        	
         m_step_size_backup = this->m_step_size;
         }
 
@@ -283,7 +283,7 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             {
             if (hoomd::detail::generate_canonical<double>(rng) < this->m_move_probability)
                 {
-		 
+			
                 vec3<Scalar> vert(shape.x[i], shape.y[i], shape.z[i]);
                 move_translate(vert, rng, this->m_step_size[type_id], 3);
                 shape.x[i] = static_cast<OverlapReal>(vert.x);
@@ -298,12 +298,12 @@ class ConvexPolyhedronVertexShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             = static_cast<OverlapReal>(fast::pow(this->m_volume[type_id] / volume, 1.0 / 3.0));
         scaleParticleVolume(shape, dr, scale);
         this->m_step_size[type_id] *= scale;
-	  
+	 
         }
 
     void retreat(uint64_t timestep, unsigned int type)
         {
-        
+        	
         this->m_step_size[type] = m_step_size_backup[type];
         }
 
@@ -320,7 +320,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
                                     std::shared_ptr<IntegratorHPMCMono<ShapeConvexPolyhedron>> mc)
         : ShapeMoveBase<ShapeConvexPolyhedron>(sysdef, mc)
         {
-	 
+		
         this->m_centroids.resize(this->m_ntypes, vec3<Scalar>(0, 0, 0));
         initializeMassProperties();
         }
@@ -330,7 +330,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
         auto& mc_params = this->m_mc->getParams();
         for (unsigned int i = 0; i < this->m_ntypes; i++)
             {
-	      
+	       
             detail::MassProperties<ShapeConvexPolyhedron> mp(mc_params[i]);
             this->m_centroids[i] = mp.getCenterOfMass();
             }
@@ -338,7 +338,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
 
     void setVolume(std::string typ, Scalar volume)
         {
-	  	
+	 	
         unsigned int typid = getValidateType(typ);
         this->m_volume[typid] = volume;
         auto& mc_params = this->m_mc->getParams();
@@ -399,12 +399,12 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
             = static_cast<OverlapReal>(fast::pow(this->m_volume[type_id] / volume, 1.0 / 3.0));
         scaleParticleVolume(shape, dr, scale);
         this->m_step_size[type_id] *= scale;
-	 
+	
         }
 
     void retreat(uint64_t timestep, unsigned int type)
         {
-	 
+	
         this->m_step_size[type] = m_step_size_backup[type];
         }
 
@@ -435,7 +435,7 @@ class ConvexPolyhedronBiasedShapeMove : public ShapeMoveBase<ShapeConvexPolyhedr
          Scalar H_old = 0.5*m_k*pow(tr_I_o - m_inertia_tensor_t, 2);
          Scalar H_new = 0.5*m_k*pow(tr_I_n - m_inertia_tensor_t, 2);
 
-           
+          
           return beta*(H_old-H_new) + inertia_term;
 
         }
@@ -877,4 +877,3 @@ inline void export_ElasticShapeMove(pybind11::module& m, const std::string& name
     } // namespace hoomd
 
 #endif
-
